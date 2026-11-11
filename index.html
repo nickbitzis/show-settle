@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Show Settle</title>
+  <meta name="description" content="Booking and settlement for a made-up 1,200 capacity music venue: the holds book with challenges and radius clauses, the deal for each show, the settlement sheet both sides sign, and a season P&L by month and deal type.">
+  <link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+  <header class="top">
+    <div>
+      <h1>Show Settle</h1>
+      <p class="sub">Larkspur Hall, a made-up 1,200 capacity room. The holds book, the deal for every show, and the settlement sheet the promoter and the tour manager sign at the end of the night.</p>
+    </div>
+    <div class="actions">
+      <button type="button" id="share">Copy share link</button>
+      <button type="button" id="reset" class="ghost">Reset</button>
+    </div>
+  </header>
+
+  <nav class="views" role="tablist" aria-label="Views">
+    <button type="button" class="view-tab" role="tab" data-view="calendar">Holds book</button>
+    <button type="button" class="view-tab" role="tab" data-view="deal">Deal builder</button>
+    <button type="button" class="view-tab" role="tab" data-view="sheet">Settlement sheet</button>
+    <button type="button" class="view-tab" role="tab" data-view="season">Season</button>
+  </nav>
+
+  <!-- Holds book -->
+  <main class="view" id="v-calendar" hidden>
+    <div class="cal-layout">
+      <section class="panel cal-panel">
+        <div class="cal-head">
+          <div class="month-nav">
+            <button type="button" class="ghost icon" id="m-prev" aria-label="Previous month">&lsaquo;</button>
+            <h2 id="m-label"></h2>
+            <button type="button" class="ghost icon" id="m-next" aria-label="Next month">&rsaquo;</button>
+          </div>
+          <div class="desk">
+            <span title="The booking desk's today. Challenge deadlines count from here">Desk date <b id="desk"></b></span>
+            <button type="button" class="ghost small" id="adv1" title="Move the desk forward a day. Challenges past their deadline release">+1 day</button>
+            <button type="button" class="ghost small" id="adv7">+7 days</button>
+          </div>
+        </div>
+        <ul class="legend cal-legend">
+          <li><i class="chip-key k-conf"></i>Confirmed</li>
+          <li><i class="chip-key k-r1"></i>1st hold</li>
+          <li><i class="chip-key k-r2"></i>2nd hold</li>
+          <li><i class="chip-key k-r3"></i>3rd and lower</li>
+          <li><i class="flag-key ch"></i>Open challenge</li>
+          <li><i class="flag-key rad"></i>Radius conflict</li>
+        </ul>
+        <div class="cal" id="cal" role="grid" aria-label="Month calendar of holds"></div>
+        <p class="hint" id="cal-note"></p>
+      </section>
+      <aside class="panel day-panel" id="day-panel" aria-live="polite"></aside>
+    </div>
+    <div class="grid-2 cal-lists">
+      <section class="panel">
+        <h2>Open challenges</h2>
+        <div class="table-scroll"><table class="items"><thead><tr><th>Date</th><th>Challenger</th><th>Must answer</th><th class="num">Deadline</th></tr></thead><tbody id="ch-rows"></tbody></table></div>
+        <p class="hint">A lower hold that is ready to confirm challenges the hold ahead of it. That hold has the book's window (3 days) to confirm or release. Silence counts as a release.</p>
+      </section>
+      <section class="panel">
+        <h2>Desk log</h2>
+        <ul class="log" id="log"></ul>
+      </section>
+    </div>
+  </main>
+
+  <!-- Deal builder -->
+  <main class="view layout" id="v-deal" hidden>
+    <form id="deal-form" class="panel" autocomplete="off"></form>
+    <section class="results">
+      <div class="panel rec">
+        <h2>Deal read</h2>
+        <p id="deal-read" class="rec-text"></p>
+      </div>
+      <div class="cards" id="deal-cards"></div>
+      <div class="panel">
+        <div class="chart-head">
+          <h2>Who gets paid at each attendance</h2>
+          <ul class="legend">
+            <li><i class="linekey c-artist"></i>Artist payout</li>
+            <li><i class="linekey c-show"></i>Promoter, as settled</li>
+            <li><i class="linekey c-prom"></i>Plus fees, rebates, merch</li>
+            <li><i class="linekey c-venue"></i>Plus the bar</li>
+          </ul>
+        </div>
+        <label class="att-pick">
+          <span>Paid attendance: <b id="att-label"></b></span>
+          <input type="range" id="att" min="0" max="1200" step="1" aria-label="Paid attendance">
+        </label>
+        <div class="chart-wrap"><svg id="c-deal" class="chart" role="img" aria-label="Artist payout and promoter result by paid attendance"></svg><div class="tooltip" hidden></div></div>
+        <p class="hint" id="deal-note"></p>
+        <div class="actions"><button type="button" id="to-sheet">Settle at this attendance</button></div>
+      </div>
+      <div class="panel">
+        <h2>Deal memo</h2>
+        <dl class="memo" id="memo"></dl>
+      </div>
+    </section>
+  </main>
+
+  <!-- Settlement sheet -->
+  <main class="view" id="v-sheet" hidden>
+    <div class="panel sheet-tools">
+      <label>Show
+        <select id="sheet-src"></select>
+      </label>
+      <label title="What happens to an expense line with no receipt or invoice">Undocumented expenses
+        <select id="policy">
+          <option value="budget">Held to the deal memo estimate</option>
+          <option value="strike">Struck</option>
+          <option value="allow">Allowed in full</option>
+        </select>
+      </label>
+      <label class="check"><input type="checkbox" id="venue-copy" checked><span>Show the venue copy (P&amp;L)</span></label>
+      <button type="button" id="print">Print sheet</button>
+    </div>
+    <article class="sheet" id="sheet"></article>
+  </main>
+
+  <!-- Season -->
+  <main class="view" id="v-season" hidden>
+    <div class="panel rec">
+      <h2>Season read</h2>
+      <p id="season-read" class="rec-text"></p>
+    </div>
+    <div class="cards" id="season-cards"></div>
+    <section class="panel">
+      <div class="chart-head">
+        <h2>P&amp;L by month</h2>
+        <ul class="legend">
+          <li><i class="swatch c-prom"></i>Promoter net (shows, fees, merch)</li>
+          <li><i class="swatch c-venue"></i>Venue net with the bar</li>
+        </ul>
+      </div>
+      <div class="chart-wrap"><svg id="c-months" class="chart" role="img" aria-label="Promoter and venue net by month"></svg><div class="tooltip" hidden></div></div>
+      <p class="hint" id="months-note"></p>
+    </section>
+    <div class="season-tables">
+      <section class="panel">
+        <h2>Risk by deal type</h2>
+        <div class="table-scroll">
+          <table class="items">
+            <thead><tr>
+              <th>Deal</th>
+              <th class="num">Shows</th>
+              <th class="num" title="Paid tickets over sellable capacity">Sold</th>
+              <th class="num" title="Promoter net: settlement result plus facility fees, ticket fee rebates, merch commission, house nut over cost, less overages the venue ate. No bar">Promoter net</th>
+              <th class="num" title="Shows where the promoter net was below zero, and what they lost in total">Losing shows</th>
+              <th class="num" title="Worst single night, promoter net">Worst night</th>
+              <th class="num" title="Shows where the percentage beat the guarantee">% side won</th>
+              <th class="num" title="Venue net with the bar">With bar</th>
+            </tr></thead>
+            <tbody id="type-rows"></tbody>
+          </table>
+        </div>
+        <p class="hint" id="type-note"></p>
+      </section>
+      <section class="panel">
+        <h2>By artist size</h2>
+        <div class="table-scroll">
+          <table class="items">
+            <thead><tr><th>Size</th><th class="num">Shows</th><th class="num">Losing</th><th class="num">Promoter net</th><th class="num">With bar</th></tr></thead>
+            <tbody id="tier-rows"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+    <section class="panel">
+      <h2>Every show</h2>
+      <p class="hint pack-sub">Click a row to open its settlement sheet. Dates confirmed on the desk are marked; the rest are holds the forecast expects to confirm.</p>
+      <div class="table-scroll show-scroll">
+        <table class="items">
+          <thead><tr>
+            <th>Date</th><th>Artist</th><th>Deal</th>
+            <th class="num">Paid</th><th class="num">NBOR</th><th class="num">Artist</th><th class="num">Promoter net</th><th class="num">With bar</th>
+          </tr></thead>
+          <tbody id="show-rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">Runs entirely in your browser. The view, the desk actions, and the deal are stored in the page URL so a book or a deal can be shared as a link. The venue, nearby rooms, artists, agencies, and every number are made up.</footer>
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>

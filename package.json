@@ -1,0 +1,11 @@
+{
+  "name": "show-settle",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Booking and settlement for a made-up 1,200 capacity music venue: the holds book, the deal for each show, the settlement sheet, and a season P&L.",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test"
+  }
+}
